@@ -1,0 +1,12 @@
+[project]
+name = "exchange-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx[socks]>=0.27.2",
+    "loguru>=0.7.2",
+    "pydantic>=2.9.2",
+    "schedule>=1.2.2",
+]

@@ -1,0 +1,8 @@
+services:
+  mexc:
+    build: .
+    volumes:
+      - ./mexc_dust_transfer.log:/app/mexc_dust_transfer.log
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
