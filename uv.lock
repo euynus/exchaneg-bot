@@ -53,6 +53,7 @@ dependencies = [
     { name = "httpx", extra = ["socks"] },
     { name = "loguru" },
     { name = "pydantic" },
+    { name = "python-telegram-bot" },
     { name = "schedule" },
 ]
 
@@ -61,6 +62,7 @@ requires-dist = [
     { name = "httpx", extras = ["socks"], specifier = ">=0.27.2" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "pydantic", specifier = ">=2.9.2" },
+    { name = "python-telegram-bot", specifier = ">=21.6" },
     { name = "schedule", specifier = ">=1.2.2" },
 ]
 
@@ -176,6 +178,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/16/16/b805c74b35607d24d37103007f899abc4880923b04929547ae68d478b7f4/pydantic_core-2.23.4-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:ed541d70698978a20eb63d8c5d72f2cc6d7079d9d90f6b50bad07826f1320f5f", size = 2116814 },
     { url = "https://files.pythonhosted.org/packages/d1/58/5305e723d9fcdf1c5a655e6a4cc2a07128bf644ff4b1d98daf7a9dbf57da/pydantic_core-2.23.4-cp313-none-win32.whl", hash = "sha256:3d5639516376dce1940ea36edf408c554475369f5da2abd45d44621cb616f769", size = 1738360 },
     { url = "https://files.pythonhosted.org/packages/a5/ae/e14b0ff8b3f48e02394d8acd911376b7b66e164535687ef7dc24ea03072f/pydantic_core-2.23.4-cp313-none-win_amd64.whl", hash = "sha256:5a1504ad17ba4210df3a045132a7baeeba5a200e930f57512ee02909fc5c4cb5", size = 1919411 },
+]
+
+[[package]]
+name = "python-telegram-bot"
+version = "21.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/cb/4010d79f4bf4dea8bfdf1493aa599dc822e88e3a9e49055eb9b25df83397/python_telegram_bot-21.6.tar.gz", hash = "sha256:8b2b37836c3ff9c2924e990474a1c4731df21b1668acebff5099f475666426c6", size = 429768 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ac/46/a002a4416730d0e5ae6bf69531787f790686ed0ca3ec316caedcfc210f10/python_telegram_bot-21.6-py3-none-any.whl", hash = "sha256:f2d6431bf154a53f40cdfc6c1d492a66102c0e4938709f6d8202bcd951c840cb", size = 652088 },
 ]
 
 [[package]]

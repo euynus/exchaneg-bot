@@ -81,7 +81,7 @@ class MEXCApiClient:
 
     def dust_transfer(self, assets):
         endpoint = "/api/v3/capital/convert"
-        params = {"asset": assets}
+        params = {"asset": ','.join(assets)}
         response = self.sign_request("post", endpoint, params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
@@ -92,6 +92,7 @@ class MEXCApiClient:
         try:
             # 获取小额资产列表
             dust_assets = self.get_dust_assets()
+            logger.info(f"获取到的小额资产: {dust_assets}")
             # 排除部分资产
             convert_assets = [
                 item["asset"]
@@ -124,7 +125,7 @@ if __name__ == "__main__":
     logger.add("mexc_dust_transfer.log", rotation="500 MB")
 
     # 设置定时任务，每小时过20秒运行
-    schedule.every().hour.at("00:20").do(job)
+    schedule.every().hour.at("00:15").do(job)
 
     logger.info("定时任务已设置，程序开始运行")
 
