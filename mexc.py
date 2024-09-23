@@ -7,6 +7,9 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from typing import List
 import schedule
+import asyncio
+import json
+import telegram
 
 import config
 
@@ -27,10 +30,11 @@ class MEXCApiClient:
         self.base_url = base_url
         # 需要忽略的资产，不要要兑换
         self.ignore_assets: List[str] = ["USDC"]
+        self.bot = telegram.Bot(token=config.telegram_bot_token)
 
-    def _get_server_time(self):
+    async def _get_server_time(self):
         endpoint = "/api/v3/time"
-        response = self.public_request("get", endpoint)
+        response = await self.public_request("get", endpoint)
         if response.status_code == httpx.codes.OK:
             return response.json()["serverTime"]
         else:
@@ -47,15 +51,15 @@ class MEXCApiClient:
         ).hexdigest()
         return sign
 
-    def public_request(self, method, endpoint, params=None):
+    async def public_request(self, method, endpoint, params=None):
         url = f"{self.base_url}{endpoint}"
-        with httpx.Client() as client:
-            response = client.request(method, url, params=params)
+        async with httpx.AsyncClient() as client:
+            response = await client.request(method, url, params=params)
         return response
 
-    def sign_request(self, method, endpoint, params=None):
+    async def sign_request(self, method, endpoint, params=None):
         url = f"{self.base_url}{endpoint}"
-        req_time = self._get_server_time()
+        req_time = await self._get_server_time()
         if params:
             params["signature"] = self._sign_v3(req_time=req_time, sign_params=params)
         else:
@@ -66,32 +70,51 @@ class MEXCApiClient:
             "x-mexc-apikey": self.api_key,
             "Content-Type": "application/json",
         }
-        with httpx.Client() as client:
-            response = client.request(method, url, params=params, headers=headers)
+        async with httpx.AsyncClient() as client:
+            response = await client.request(method, url, params=params, headers=headers)
         return response
 
-    def get_dust_assets(self):
+    async def get_dust_assets(self):
         endpoint = "/api/v3/capital/convert/list"
-        response = self.sign_request("get", endpoint)
+        response = await self.sign_request("get", endpoint)
 
         if response.status_code == httpx.codes.OK:
             return response.json()
         else:
             raise Exception(f"Error: {response.status_code}, {response.text}")
 
-    def dust_transfer(self, assets):
+    async def dust_transfer(self, assets):
         endpoint = "/api/v3/capital/convert"
-        params = {"asset": ','.join(assets)}
-        response = self.sign_request("post", endpoint, params=params)
+        params = {"asset": ",".join(assets)}
+        response = await self.sign_request("post", endpoint, params=params)
         if response.status_code == httpx.codes.OK:
-            return response.json()
+            result = response.json()
+            await self.send_telegram_message(result)
+            return result
         else:
+            await self.send_telegram_message(response.json())
             raise Exception(f"Error: {response.status_code}, {response.text}")
 
-    def run(self):
+    async def send_telegram_message(self, result):
+        message = f"小额资产兑换结果:\n```\n{json.dumps(result, indent=2)}\n```"
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{config.telegram_host}/bot{config.telegram_bot_token}/sendMessage",
+                json={
+                    "chat_id": config.telegram_chat_id,
+                    "text": message,
+                    "parse_mode": "Markdown",
+                },
+            )
+        if response.status_code == httpx.codes.OK:
+            logger.info("Telegram message sent!")
+        else:
+            logger.error(f"Error: {response.status_code}, {response.text}")
+
+    async def run(self):
         try:
             # 获取小额资产列表
-            dust_assets = self.get_dust_assets()
+            dust_assets = await self.get_dust_assets()
             logger.info(f"获取到的小额资产: {dust_assets}")
             # 排除部分资产
             convert_assets = [
@@ -106,17 +129,17 @@ class MEXCApiClient:
             logger.info(f"准备兑换资产: {convert_assets}")
 
             # 进行小额资产兑换
-            result = self.dust_transfer(convert_assets)
+            result = await self.dust_transfer(convert_assets)
             logger.info("兑换结果:")
             logger.info(result)
         except Exception as e:
-            logger.error(f"发生错误: {str(e)}")
+            logger.error(f"{str(e)}")
 
 
 def job():
     logger.info("开始执行定时任务")
     mexc = MEXCApiClient(config.api_key, config.secret_key)
-    mexc.run()
+    asyncio.run(mexc.run())
     logger.info("定时任务执行完毕")
 
 
@@ -125,7 +148,7 @@ if __name__ == "__main__":
     logger.add("mexc_dust_transfer.log", rotation="500 MB")
 
     # 设置定时任务，每小时过20秒运行
-    schedule.every().hour.at("00:15").do(job)
+    schedule.every().hour.at("00:10").do(job)
 
     logger.info("定时任务已设置，程序开始运行")
 
