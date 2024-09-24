@@ -1,5 +1,6 @@
 # 使用 Python 3.12 作为基础镜像
-FROM uv:python3.12-alpine
+FROM python:3.12-slim-bookworm
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # 设置工作目录
 WORKDIR /app
