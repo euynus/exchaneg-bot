@@ -30,7 +30,7 @@ class MEXCApiClient:
         self.secret_key = secret_key
         self.base_url = base_url
         # 需要忽略的资产，不要要兑换
-        self.ignore_assets: List[str] = ["USDC"]
+        self.ignore_assets: List[str] = ["USDC", "USDT"]
         self.bot = telegram.Bot(token=config.telegram_bot_token)
 
     async def _get_server_time(self):
@@ -98,19 +98,18 @@ class MEXCApiClient:
 
     async def send_telegram_message(self, result):
         message = f"小额资产兑换结果:\n```\n{json.dumps(result, indent=2)}\n```"
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{config.telegram_host}/bot{config.telegram_bot_token}/sendMessage",
-                json={
-                    "chat_id": config.telegram_chat_id,
-                    "text": message,
-                    "parse_mode": "Markdown",
-                },
+        try:
+            result = await self.bot.send_message(
+                chat_id=config.telegram_chat_id,
+                text=message,
+                parse_mode="Markdown",
             )
-        if response.status_code == httpx.codes.OK:
-            logger.info("Telegram message sent!")
-        else:
-            logger.error(f"Error: {response.status_code}, {response.text}")
+            if result:
+                logger.info("Telegram message sent successfully")
+            else:
+                logger.warning(f"Failed to send Telegram message: {result}")
+        except Exception as e:
+            logger.error(f"Error sending Telegram message: {str(e)}")
 
     async def run(self):
         try:
