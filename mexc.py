@@ -90,14 +90,14 @@ class MEXCApiClient:
         response = await self.sign_request("post", endpoint, params=params)
         if response.status_code == httpx.codes.OK:
             result = response.json()
-            await self.send_telegram_message(result)
+            await self.send_telegram_message("小额资产兑换结果", result)
             return result
         else:
             await self.send_telegram_message(response.json())
             raise Exception(f"Error: {response.status_code}, {response.text}")
 
-    async def send_telegram_message(self, result):
-        message = f"小额资产兑换结果:\n```\n{json.dumps(result, indent=2)}\n```"
+    async def send_telegram_message(self, title, result):
+        message = f"*{title}*\n```\n{json.dumps(result, indent=2)}\n```"
         try:
             result = await self.bot.send_message(
                 chat_id=config.telegram_chat_id,
@@ -116,6 +116,7 @@ class MEXCApiClient:
             # 获取小额资产列表
             dust_assets = await self.get_dust_assets()
             logger.info(f"获取到的小额资产: {dust_assets}")
+            await self.send_telegram_message("获取到的小额资产", dust_assets)
             # 排除部分资产
             convert_assets = [
                 item["asset"]
