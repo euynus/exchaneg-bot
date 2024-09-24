@@ -1,5 +1,5 @@
 # 使用 Python 3.12 作为基础镜像
-FROM python:3.12-slim
+FROM uv:python3.12-alpine
 
 # 设置工作目录
 WORKDIR /app
@@ -8,10 +8,7 @@ WORKDIR /app
 COPY . /app
 
 # 安装 uv
-RUN pip install uv
-
-# 使用 uv 从 pyproject.toml 安装依赖
-RUN uv pip install .
+RUN uv sync --frozen
 
 # 运行 app.py
-CMD ["python", "mexc.py"]
+CMD ["uv", "run", "mexc.py"]
